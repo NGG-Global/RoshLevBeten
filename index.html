@@ -113,15 +113,27 @@
   .results-brand .sub{ font-size:12px; color:#A99E89; letter-spacing:2px; }
   .results-head h1{ font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:34px; line-height:1.25; margin:0; color:#F7F1E3; }
   .fig-wrap{ position:relative; width:min(440px,100%); aspect-ratio:440/560; margin:18px auto 6px; }
-  .fig-label{ position:absolute; }
+  /* body graphic asset — centered inside .fig-wrap, sits beneath the gauges */
+  .body-asset{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    height:100%; width:auto; max-width:100%; object-fit:contain;
+    pointer-events:none; z-index:1;
+  }
+  /* neutral fallback drawing (shown only if the asset fails to load) */
+  .body-fallback{ position:absolute; inset:0; z-index:1; }
+  .body-fallback svg{ width:100%; height:100%; }
+  /* dynamically-generated score gauges, overlaid above the asset */
+  .fig-gauges{ position:absolute; inset:0; z-index:2; pointer-events:none; }
+  .fig-label{ position:absolute; z-index:3; }
   .fig-label .name{ font-family:'Frank Ruhl Libre',serif; font-weight:700; font-size:23px; }
   .level-pill{
     display:inline-block; margin-top:6px; background:rgba(244,238,224,0.07);
     padding:3px 14px; border-radius:999px; font-size:12.5px; font-weight:600; letter-spacing:.5px;
   }
-  .lbl-head{ left:69%; top:3%; width:31%; text-align:right; }
-  .lbl-heart{ left:1%; top:30%; width:30%; text-align:left; }
-  .lbl-gut{ left:70%; top:50%; width:30%; text-align:right; }
+  /* labels frame the figure symmetrically around the central axis */
+  .lbl-head{ left:62%; top:2%; width:34%; text-align:right; }
+  .lbl-heart{ left:4%; top:31%; width:34%; text-align:left; }
+  .lbl-gut{ left:62%; top:52%; width:34%; text-align:right; }
   .legend{ display:flex; justify-content:center; gap:34px; padding:8px 40px 14px; flex-wrap:wrap; }
   .legend-item{ display:flex; align-items:center; gap:9px; font-size:13px; color:#A99E89; }
   .legend-dot{ width:11px; height:11px; border-radius:50%; }
@@ -157,6 +169,11 @@
     .results-head, .results-foot{ padding-left:24px; padding-right:24px; }
     .summary{ padding-left:24px; padding-right:24px; }
     .legend{ gap:18px; }
+    .fig-label .name{ font-size:19px; }
+    .level-pill{ font-size:11px; padding:2px 10px; }
+    .lbl-head{ left:60%; width:38%; }
+    .lbl-heart{ left:2%; width:38%; }
+    .lbl-gut{ left:60%; width:38%; }
   }
 </style>
 </head>
@@ -272,12 +289,20 @@
       + bodyPaths('rgba(237,226,204,0.5)', 'rgba(237,226,204,0.05)', 2) + '</svg>';
   }
 
+  // Neutral fallback drawing for the results screen — used only if the
+  // body-map-human.png asset fails to load.
+  function fallbackFigureSVG(){
+    return '<svg viewBox="0 0 440 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">'
+      + bodyPaths('rgba(244,238,224,0.22)', 'rgba(244,238,224,0.03)', 2.2) + '</svg>';
+  }
+
+  // Score gauges only — overlaid on top of the body asset. Gauges sit on the
+  // central axis (x=220): head slightly larger, heart and gut matched.
   function scoredFigureSVG(scores){
-    return '<svg viewBox="0 0 440 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet" style="position:absolute; inset:0;">'
-      + '<g>' + bodyPaths('rgba(244,238,224,0.22)', 'rgba(244,238,224,0.03)', 2.2) + '</g>'
-      + gauge(220, 74, 42, scores.head, ACCENTS.head)
-      + gauge(210, 200, 32, scores.heart, ACCENTS.heart)
-      + gauge(210, 274, 32, scores.gut, ACCENTS.gut)
+    return '<svg class="fig-gauges" viewBox="0 0 440 560" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">'
+      + gauge(220, 80, 42, scores.head, ACCENTS.head)
+      + gauge(220, 212, 34, scores.heart, ACCENTS.heart)
+      + gauge(220, 305, 34, scores.gut, ACCENTS.gut)
       + '</svg>';
   }
 
@@ -382,6 +407,9 @@
     +     '<h1>ראש · לב · בטן</h1>'
     +   '</div>'
     +   '<div class="fig-wrap">'
+    +     '<img class="body-asset" src="assets/body-map-human.png" alt="" '
+    +        'onerror="this.style.display=\'none\';var f=document.getElementById(\'bodyFallback\');if(f)f.style.display=\'block\';">'
+    +     '<div id="bodyFallback" class="body-fallback" style="display:none;">'+fallbackFigureSVG()+'</div>'
     +     scoredFigureSVG(scores)
     +     '<div class="fig-label lbl-head"><div class="name" style="color:'+ACCENTS.head+';">ראש</div>'+pill('head')+'</div>'
     +     '<div class="fig-label lbl-heart"><div class="name" style="color:'+ACCENTS.heart+';">לב</div>'+pill('heart')+'</div>'
